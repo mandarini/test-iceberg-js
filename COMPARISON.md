@@ -74,7 +74,7 @@ import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
 
 // Get catalog via convenience method
-const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
+const catalog = supabase.storage.analytics.fromCatalog(ANALYTICS_BUCKET_NAME);
 ```
 
 ### Environment Variables Required
@@ -110,7 +110,7 @@ ANALYTICS_BUCKET_NAME=warehouse                   # Bucket name
 
 ## Side-by-Side Comparison
 
-| Aspect                 | iceberg-js (direct)       | supabase-js (getCatalog)     |
+| Aspect                 | iceberg-js (direct)       | supabase-js (fromCatalog)     |
 | ---------------------- | ------------------------- | ---------------------------- |
 | **Package**            | `iceberg-js`              | `@supabase/supabase-js`      |
 | **Setup Lines**        | 8 lines                   | 3 lines                      |
@@ -118,7 +118,7 @@ ANALYTICS_BUCKET_NAME=warehouse                   # Bucket name
 | **Auth Configuration** | Manual                    | Automatic                    |
 | **Environment Vars**   | 3 (token, warehouse, URI) | 3 (URL, key, bucket)         |
 | **Integration**        | Standalone                | Full Supabase ecosystem      |
-| **Advanced Options**   | Full control              | Limited to getCatalog config |
+| **Advanced Options**   | Full control              | Limited to fromCatalog config |
 | **Use Case**           | Analytics-only apps       | Full Supabase apps           |
 
 ---
@@ -138,7 +138,7 @@ const catalog = new IcebergRestCatalog({
 
 // real-test-supabase-js.ts (supabase-js)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
-const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
+const catalog = supabase.storage.analytics.fromCatalog(ANALYTICS_BUCKET_NAME);
 ```
 
 ### Everything Else
@@ -158,7 +158,7 @@ await catalog.dropNamespace(...)
 
 ## Recommendation
 
-### Use `supabase-js` (getCatalog) when:
+### Use `supabase-js` (fromCatalog) when:
 
 - Building a full Supabase application
 - You want simpler configuration
@@ -176,11 +176,11 @@ await catalog.dropNamespace(...)
 
 ## Behind the Scenes
 
-What does `getCatalog()` actually do? Let's look at the implementation:
+What does `fromCatalog()` actually do? Let's look at the implementation:
 
 ```typescript
 // From StorageAnalyticsClient.ts
-getCatalog(bucketName: string): IcebergRestCatalog {
+fromCatalog(bucketName: string): IcebergRestCatalog {
   const catalogUrl = `${this.url}/v1`
 
   return new IcebergRestCatalog({
@@ -202,7 +202,7 @@ getCatalog(bucketName: string): IcebergRestCatalog {
 3. Passes through the Supabase client's authentication headers
 4. Uses the same fetch implementation for consistency
 
-So `getCatalog()` is essentially a **convenience factory** that creates an `IcebergRestCatalog` with Supabase-specific configuration pre-applied.
+So `fromCatalog()` is essentially a **convenience factory** that creates an `IcebergRestCatalog` with Supabase-specific configuration pre-applied.
 
 ---
 

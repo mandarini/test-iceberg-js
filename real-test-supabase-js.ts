@@ -10,10 +10,12 @@ const ANALYTICS_BUCKET_NAME = process.env.ANALYTICS_BUCKET_NAME!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_TOKEN);
 
 // Get Iceberg catalog through supabase-js
-const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
+const catalog = supabase.storage.analytics.fromCatalog(ANALYTICS_BUCKET_NAME);
 
 async function listAll() {
   let namespaces = await catalog.listNamespaces();
+
+
 
   for (const namespaceItem of namespaces) {
     let namespaceName = namespaceItem.namespace[0];
