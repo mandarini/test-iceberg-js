@@ -3,11 +3,11 @@ import { IcebergError } from "iceberg-js";
 
 // Supabase configuration
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
+const SUPABASE_TOKEN = process.env.SUPABASE_TOKEN!;
 const ANALYTICS_BUCKET_NAME = process.env.ANALYTICS_BUCKET_NAME!;
 
 // Create Supabase client with secret key (required for analytics operations)
-const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_TOKEN);
 
 // Get Iceberg catalog through supabase-js
 const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);

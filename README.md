@@ -13,6 +13,7 @@ This project provides test scripts that validate `iceberg-js` functionality agai
 - Managing table lifecycle
 
 **Two test scenarios:**
+
 - **`test-local.ts`**: Tests against a local Docker-based Iceberg REST Catalog
 - **`real-test.ts`**: Tests against a remote Supabase Iceberg REST Catalog
 
@@ -92,6 +93,14 @@ cp .env.example .env
 
 Then edit `.env` and add your Supabase credentials:
 
+To get these values go to:
+
+```text
+https://supabase.com/dashboard/project/<project id>/storage/analytics/buckets/<bucket name>
+```
+
+and copy "Connection details"
+
 ```bash
 SUPABASE_TOKEN=your_service_role_key_here
 SUPABASE_WAREHOUSE=warehouse
@@ -104,6 +113,7 @@ S3_ENDPOINT=https://your-project-ref.storage.supabase.co/storage/v1/s3
 ```
 
 **Where to find your credentials:**
+
 - `SUPABASE_TOKEN`: Project Settings → API → service_role key (Secret)
 - `SUPABASE_CATALOG_URI`: Replace `your-project-ref` with your Supabase project reference
 - `SUPABASE_WAREHOUSE`: Typically `warehouse` (your Iceberg warehouse name)
@@ -194,14 +204,14 @@ docker compose down -v
 
 For remote testing with `real-test.ts`, the following environment variables are used:
 
-| Variable | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `SUPABASE_TOKEN` | Yes | Secret key from Supabase project | `eyJhbGc...` |
-| `SUPABASE_WAREHOUSE` | Yes | Name of your Iceberg warehouse | `warehouse` |
-| `SUPABASE_CATALOG_URI` | Yes | Iceberg REST Catalog endpoint | `https://xxx.storage.supabase.co/storage/v1/iceberg` |
-| `AWS_ACCESS_KEY_ID` | Optional | AWS access key for direct S3 access | `AKIAIOSFODNN7EXAMPLE` |
-| `AWS_SECRET_ACCESS_KEY` | Optional | AWS secret key for direct S3 access | `wJalrXUtnFEMI/...` |
-| `S3_ENDPOINT` | Optional | S3 endpoint URL | `https://xxx.storage.supabase.co/storage/v1/s3` |
+| Variable                | Required | Description                         | Example                                              |
+| ----------------------- | -------- | ----------------------------------- | ---------------------------------------------------- |
+| `SUPABASE_TOKEN`        | Yes      | Secret key from Supabase project    | `eyJhbGc...`                                         |
+| `SUPABASE_WAREHOUSE`    | Yes      | Name of your Iceberg warehouse      | `warehouse`                                          |
+| `SUPABASE_CATALOG_URI`  | Yes      | Iceberg REST Catalog endpoint       | `https://xxx.storage.supabase.co/storage/v1/iceberg` |
+| `AWS_ACCESS_KEY_ID`     | Optional | AWS access key for direct S3 access | `AKIAIOSFODNN7EXAMPLE`                               |
+| `AWS_SECRET_ACCESS_KEY` | Optional | AWS secret key for direct S3 access | `wJalrXUtnFEMI/...`                                  |
+| `S3_ENDPOINT`           | Optional | S3 endpoint URL                     | `https://xxx.storage.supabase.co/storage/v1/s3`      |
 
 ## Troubleshooting
 

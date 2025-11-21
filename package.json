@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:local": "npx tsx test-local.ts",
-    "test:remote": "npx tsx --env-file=.env real-test.ts"
+    "test:remote": "npx tsx --env-file=.env real-test.ts",
+    "test:real": "npx tsx --env-file=.env real-test-supabase-js.ts"
   },
   "author": "",
   "license": "MIT",
