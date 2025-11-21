@@ -1,0 +1,151 @@
+import { createClient } from "@supabase/supabase-js";
+import { IcebergError } from "iceberg-js";
+
+// Supabase configuration
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+const ANALYTICS_BUCKET_NAME = process.env.ANALYTICS_BUCKET_NAME!;
+
+// Create Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Get Iceberg catalog through supabase-js
+const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
+
+async function listAll() {
+  let namespaces = await catalog.listNamespaces();
+
+  for (const namespaceItem of namespaces) {
+    let namespaceName = namespaceItem.namespace[0];
+    console.log(namespaceName);
+    let tables = await catalog.listTables(namespaceItem);
+    for (let i = 0; i < tables.length; i++) {
+      const isLast = i === tables.length - 1;
+      const prefix = isLast ? "└── " : "├── ";
+      console.log(prefix + tables[i]!.name);
+    }
+  }
+}
+
+async function createTable(namespace: any, tableName: string) {
+  const metadata = await catalog.createTable(namespace, {
+    name: tableName,
+    schema: {
+      type: "struct",
+      fields: [
+        { id: 1, name: "VendorID", type: "long", required: false },
+        {
+          id: 2,
+          name: "tpep_pickup_datetime",
+          type: "timestamp",
+          required: false,
+        },
+        {
+          id: 3,
+          name: "tpep_dropoff_datetime",
+          type: "timestamp",
+          required: false,
+        },
+        { id: 4, name: "passenger_count", type: "double", required: false },
+        { id: 5, name: "trip_distance", type: "double", required: false },
+        { id: 6, name: "RatecodeID", type: "double", required: false },
+        { id: 7, name: "store_and_fwd_flag", type: "string", required: false },
+        { id: 8, name: "PULocationID", type: "long", required: false },
+        { id: 9, name: "DOLocationID", type: "long", required: false },
+        { id: 10, name: "payment_type", type: "long", required: false },
+        { id: 11, name: "fare_amount", type: "double", required: false },
+        { id: 12, name: "extra", type: "double", required: false },
+        { id: 13, name: "mta_tax", type: "double", required: false },
+        { id: 14, name: "tip_amount", type: "double", required: false },
+        { id: 15, name: "tolls_amount", type: "double", required: false },
+        {
+          id: 16,
+          name: "improvement_surcharge",
+          type: "double",
+          required: false,
+        },
+        { id: 17, name: "total_amount", type: "double", required: false },
+        {
+          id: 18,
+          name: "congestion_surcharge",
+          type: "double",
+          required: false,
+        },
+        { id: 19, name: "airport_fee", type: "double", required: false },
+      ],
+      "schema-id": 0,
+      "identifier-field-ids": [],
+    },
+    "partition-spec": {
+      "spec-id": 0,
+      fields: [],
+    },
+    "write-order": {
+      "order-id": 0,
+      fields: [],
+    },
+    "stage-create": false,
+    properties: {},
+  });
+}
+
+console.log("\n═══════════════════════════════════════");
+console.log("    🚀 STARTING (using supabase-js)");
+console.log("═══════════════════════════════════════\n");
+
+// List all namespaces and tables
+await listAll();
+
+const newNamespace = { namespace: ["test"] };
+const newTable = "taxi_dataset";
+
+// Cleanup: Drop existing table and namespace if they exist
+console.log("\n🧹 Cleaning up existing resources...\n");
+try {
+  await catalog.dropTable({ ...newNamespace, name: newTable }, { purge: true });
+  console.log("  ✓ Dropped existing table");
+} catch (error) {
+  if (error instanceof IcebergError && error.status === 404) {
+    console.log("  • No existing table to clean up");
+  } else {
+    throw error;
+  }
+}
+
+try {
+  await catalog.dropNamespace(newNamespace);
+  console.log("  ✓ Dropped existing namespace");
+} catch (error) {
+  if (error instanceof IcebergError && error.status === 404) {
+    console.log("  • No existing namespace to clean up");
+  } else {
+    throw error;
+  }
+}
+console.log("\n✅ Cleanup complete!\n");
+
+// Create a new namespace
+await catalog.createNamespace(newNamespace, {
+  properties: { owner: "data-team" },
+});
+console.log("\n✅ ADDED NEW NAMESPACE\n");
+await listAll();
+
+// Create a new table in the namespace
+await createTable(newNamespace, newTable);
+console.log("\n✅ ADDED NEW TABLE\n");
+await listAll();
+
+// Drop the table
+await catalog.dropTable({ ...newNamespace, name: newTable }, { purge: true });
+console.log("\n❌ DROPPED NEW TABLE\n");
+await listAll();
+
+// Drop the namespace
+await catalog.dropNamespace(newNamespace);
+console.log("\n❌ DROPPED NEW NAMESPACE\n");
+await listAll();
+
+console.log("\n═══════════════════════════════════════");
+console.log("           ✅ COMPLETED");
+console.log("═══════════════════════════════════════\n");
