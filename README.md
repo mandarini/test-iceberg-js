@@ -1,10 +1,10 @@
 # test-iceberg-js
 
-A test project for the [`iceberg-js`](https://github.com/supabase/iceberg-js) library, demonstrating how to interact with an Apache Iceberg REST Catalog running locally via Docker.
+A test project for the [`iceberg-js`](https://github.com/supabase/iceberg-js) library, demonstrating how to interact with an Apache Iceberg REST Catalog both locally via Docker and remotely via Supabase.
 
 ## Overview
 
-This project provides a simple test suite that validates `iceberg-js` functionality against a local Iceberg REST Catalog. It demonstrates common operations such as:
+This project provides test scripts that validate `iceberg-js` functionality against both local and remote Iceberg REST Catalogs. It demonstrates common operations such as:
 
 - Creating and listing namespaces
 - Creating tables with schemas
@@ -12,11 +12,16 @@ This project provides a simple test suite that validates `iceberg-js` functional
 - Updating table properties
 - Managing table lifecycle
 
+**Two test scenarios:**
+- **`test-local.ts`**: Tests against a local Docker-based Iceberg REST Catalog
+- **`real-test.ts`**: Tests against a remote Supabase Iceberg REST Catalog
+
 ## Prerequisites
 
-- **Node.js** 20+
-- **Docker** and **Docker Compose**
+- **Node.js** 20+ (includes native `.env` file support)
 - **npm** or **pnpm** (for package management)
+- **Docker** and **Docker Compose** (for local testing only)
+- **Supabase account** with Iceberg support (for remote testing only)
 
 ## Quick Start
 
@@ -26,7 +31,11 @@ This project provides a simple test suite that validates `iceberg-js` functional
 npm install
 ```
 
-### 2. Start Docker Services
+### 2. Choose Your Test Scenario
+
+#### Option A: Local Testing (Docker)
+
+##### 2a. Start Docker Services
 
 Start the Iceberg REST Catalog and MinIO storage:
 
@@ -49,11 +58,13 @@ Check that the catalog is running:
 curl http://localhost:8181/v1/config
 ```
 
-### 4. Run the Test
+##### 4a. Run the Local Test
 
-Execute the test script:
+Execute the local test script:
 
 ```bash
+npm run test:local
+# or
 npx tsx test-local.ts
 ```
 
@@ -67,17 +78,70 @@ The test will:
 6. Load table metadata
 7. Update table properties
 
+#### Option B: Remote Testing (Supabase)
+
+##### 2b. Set Up Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` and add your Supabase credentials:
+
+```bash
+SUPABASE_TOKEN=your_service_role_key_here
+SUPABASE_WAREHOUSE=warehouse
+SUPABASE_CATALOG_URI=https://your-project-ref.storage.supabase.co/storage/v1/iceberg
+
+# Optional: For direct S3 access
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+S3_ENDPOINT=https://your-project-ref.storage.supabase.co/storage/v1/s3
+```
+
+**Where to find your credentials:**
+- `SUPABASE_TOKEN`: Project Settings → API → service_role key (Secret)
+- `SUPABASE_CATALOG_URI`: Replace `your-project-ref` with your Supabase project reference
+- `SUPABASE_WAREHOUSE`: Typically `warehouse` (your Iceberg warehouse name)
+
+**Security Note:** The `.env` file is gitignored and should never be committed to version control.
+
+##### 3b. Run the Remote Test
+
+Execute the remote test script:
+
+```bash
+npm run test:remote
+# or
+npx tsx real-test.ts
+```
+
+The test will:
+
+1. List all namespaces and tables in your Supabase warehouse
+2. Create a `demo` namespace with custom properties
+3. Create a `taxi_dataset` table with NYC taxi data schema (19 fields)
+4. Demonstrate access delegation with vended credentials
+5. Clean up by dropping the table and namespace
+
 ## Project Structure
 
 ```
 .
 ├── docker-compose.yml      # Docker services configuration
-├── test-local.ts           # Main test script
+├── test-local.ts           # Local Docker test script
+├── real-test.ts            # Remote Supabase test script
+├── .env                    # Environment variables (gitignored)
+├── .env.example            # Environment variables template
 ├── package.json            # Node.js dependencies
 └── README.md              # This file
 ```
 
 ## Test Script Details
+
+### test-local.ts (Local Docker Testing)
 
 The `test-local.ts` script performs the following operations:
 
@@ -92,6 +156,17 @@ The `test-local.ts` script performs the following operations:
 5. **List Tables**: Lists all tables in the `test` namespace
 6. **Load Metadata**: Retrieves and displays table schema information
 7. **Update Properties**: Updates table properties (split target size, compression)
+
+### real-test.ts (Remote Supabase Testing)
+
+The `real-test.ts` script demonstrates advanced features:
+
+1. **Authentication**: Uses bearer token authentication with service_role key
+2. **Catalog Name**: Specifies the warehouse/catalog name for multi-catalog support
+3. **Access Delegation**: Requests vended credentials for direct S3 access
+4. **Complex Schema**: Creates a table with 19 fields (NYC taxi dataset schema)
+5. **Namespace Management**: Creates namespaces with custom properties
+6. **Cleanup**: Properly removes tables and namespaces after testing
 
 ## Accessing MinIO Console
 
@@ -113,9 +188,31 @@ docker compose stop
 docker compose down -v
 ```
 
+## Environment Variables Reference
+
+For remote testing with `real-test.ts`, the following environment variables are used:
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `SUPABASE_TOKEN` | Yes | Service role key from Supabase project | `eyJhbGc...` |
+| `SUPABASE_WAREHOUSE` | Yes | Name of your Iceberg warehouse | `warehouse` |
+| `SUPABASE_CATALOG_URI` | Yes | Iceberg REST Catalog endpoint | `https://xxx.storage.supabase.co/storage/v1/iceberg` |
+| `AWS_ACCESS_KEY_ID` | Optional | AWS access key for direct S3 access | `AKIAIOSFODNN7EXAMPLE` |
+| `AWS_SECRET_ACCESS_KEY` | Optional | AWS secret key for direct S3 access | `wJalrXUtnFEMI/...` |
+| `S3_ENDPOINT` | Optional | S3 endpoint URL | `https://xxx.storage.supabase.co/storage/v1/s3` |
+
 ## Troubleshooting
 
-### Port Already in Use
+### Environment Variables Not Loading (real-test.ts)
+
+If you get an error like `Cannot read properties of undefined (reading 'endsWith')`, it means your environment variables aren't loaded:
+
+1. Ensure you have a `.env` file in the project root
+2. Verify Node.js version is 20+ (which supports native `.env` loading)
+3. Check that your `.env` file has all required variables
+4. Try running with explicit env loading: `node --env-file=.env -r tsx/register real-test.ts`
+
+### Port Already in Use (test-local.ts)
 
 If ports 8181 or 9000 are already in use, edit `docker-compose.yml` to change the port mappings:
 

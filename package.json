@@ -5,12 +5,14 @@
   "description": "testing iceberg js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:local": "tsx test-local.ts",
+    "test:remote": "tsx real-test.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "iceberg-js": "https://pkg.pr.new/supabase/iceberg-js@15",
+    "iceberg-js": "^0.6.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
