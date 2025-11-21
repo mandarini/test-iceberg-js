@@ -196,7 +196,7 @@ For remote testing with `real-test.ts`, the following environment variables are 
 
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
-| `SUPABASE_TOKEN` | Yes | Service role key from Supabase project | `eyJhbGc...` |
+| `SUPABASE_TOKEN` | Yes | Secret key from Supabase project | `eyJhbGc...` |
 | `SUPABASE_WAREHOUSE` | Yes | Name of your Iceberg warehouse | `warehouse` |
 | `SUPABASE_CATALOG_URI` | Yes | Iceberg REST Catalog endpoint | `https://xxx.storage.supabase.co/storage/v1/iceberg` |
 | `AWS_ACCESS_KEY_ID` | Optional | AWS access key for direct S3 access | `AKIAIOSFODNN7EXAMPLE` |

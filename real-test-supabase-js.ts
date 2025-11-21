@@ -3,11 +3,11 @@ import { IcebergError } from "iceberg-js";
 
 // Supabase configuration
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
 const ANALYTICS_BUCKET_NAME = process.env.ANALYTICS_BUCKET_NAME!;
 
-// Create Supabase client
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Create Supabase client with secret key (required for analytics operations)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
 
 // Get Iceberg catalog through supabase-js
 const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
@@ -104,8 +104,14 @@ console.log("\n🧹 Cleaning up existing resources...\n");
 try {
   await catalog.dropTable({ ...newNamespace, name: newTable }, { purge: true });
   console.log("  ✓ Dropped existing table");
-} catch (error) {
-  if (error instanceof IcebergError && error.status === 404) {
+} catch (error: any) {
+  // Check for 404 errors (resource not found) - handle various error formats
+  const is404 =
+    (error instanceof IcebergError && error.status === 404) ||
+    error?.status === 404 ||
+    error?.details?.error?.code === 404;
+
+  if (is404) {
     console.log("  • No existing table to clean up");
   } else {
     throw error;
@@ -115,8 +121,14 @@ try {
 try {
   await catalog.dropNamespace(newNamespace);
   console.log("  ✓ Dropped existing namespace");
-} catch (error) {
-  if (error instanceof IcebergError && error.status === 404) {
+} catch (error: any) {
+  // Check for 404 errors (resource not found) - handle various error formats
+  const is404 =
+    (error instanceof IcebergError && error.status === 404) ||
+    error?.status === 404 ||
+    error?.details?.error?.code === 404;
+
+  if (is404) {
     console.log("  • No existing namespace to clean up");
   } else {
     throw error;

@@ -5,6 +5,7 @@ This document compares the two approaches for working with Supabase Analytics (I
 ## Overview
 
 Both test files perform identical operations:
+
 1. List all namespaces and tables
 2. Clean up existing test resources
 3. Create a new namespace
@@ -22,11 +23,11 @@ The difference is in **how they initialize the Iceberg catalog client**.
 import { IcebergRestCatalog } from "iceberg-js";
 
 const catalog = new IcebergRestCatalog({
-  baseUrl: SUPABASE_CATALOG_URI,              // Full Iceberg endpoint URL
-  catalogName: SUPABASE_WAREHOUSE,            // Warehouse/bucket name
+  baseUrl: SUPABASE_CATALOG_URI, // Full Iceberg endpoint URL
+  catalogName: SUPABASE_WAREHOUSE, // Warehouse/bucket name
   auth: {
     type: "bearer",
-    token: SUPABASE_TOKEN,                    // Service role key
+    token: SUPABASE_TOKEN, // Secret key
   },
   accessDelegation: ["vended-credentials"],
 });
@@ -35,7 +36,7 @@ const catalog = new IcebergRestCatalog({
 ### Environment Variables Required
 
 ```bash
-SUPABASE_TOKEN=eyJhbGci...                                    # Service role key
+SUPABASE_TOKEN=eyJhbGci...                                    # Secret key
 SUPABASE_WAREHOUSE=warehouse                                  # Bucket name
 SUPABASE_CATALOG_URI=https://xyz.storage.supabase.co/storage/v1/iceberg
 ```
@@ -70,7 +71,7 @@ SUPABASE_CATALOG_URI=https://xyz.storage.supabase.co/storage/v1/iceberg
 ```typescript
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
 
 // Get catalog via convenience method
 const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
@@ -79,9 +80,9 @@ const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
 ### Environment Variables Required
 
 ```bash
-SUPABASE_URL=https://xyz.supabase.co           # Project URL
-SUPABASE_ANON_KEY=eyJhbGci...                  # Anon or service role key
-ANALYTICS_BUCKET_NAME=warehouse                # Bucket name
+SUPABASE_URL=https://xyz.supabase.co              # Project URL
+SUPABASE_SECRET_KEY=eyJhbGci...            # Secret key (required for analytics)
+ANALYTICS_BUCKET_NAME=warehouse                   # Bucket name
 ```
 
 ### When to Use
@@ -109,16 +110,16 @@ ANALYTICS_BUCKET_NAME=warehouse                # Bucket name
 
 ## Side-by-Side Comparison
 
-| Aspect | iceberg-js (direct) | supabase-js (getCatalog) |
-|--------|---------------------|--------------------------|
-| **Package** | `iceberg-js` | `@supabase/supabase-js` |
-| **Setup Lines** | 8 lines | 3 lines |
-| **URL Construction** | Manual | Automatic |
-| **Auth Configuration** | Manual | Automatic |
-| **Environment Vars** | 3 (token, warehouse, URI) | 3 (URL, key, bucket) |
-| **Integration** | Standalone | Full Supabase ecosystem |
-| **Advanced Options** | Full control | Limited to getCatalog config |
-| **Use Case** | Analytics-only apps | Full Supabase apps |
+| Aspect                 | iceberg-js (direct)       | supabase-js (getCatalog)     |
+| ---------------------- | ------------------------- | ---------------------------- |
+| **Package**            | `iceberg-js`              | `@supabase/supabase-js`      |
+| **Setup Lines**        | 8 lines                   | 3 lines                      |
+| **URL Construction**   | Manual                    | Automatic                    |
+| **Auth Configuration** | Manual                    | Automatic                    |
+| **Environment Vars**   | 3 (token, warehouse, URI) | 3 (URL, key, bucket)         |
+| **Integration**        | Standalone                | Full Supabase ecosystem      |
+| **Advanced Options**   | Full control              | Limited to getCatalog config |
+| **Use Case**           | Analytics-only apps       | Full Supabase apps           |
 
 ---
 
@@ -136,7 +137,7 @@ const catalog = new IcebergRestCatalog({
 });
 
 // real-test-supabase-js.ts (supabase-js)
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
 const catalog = supabase.storage.analytics.getCatalog(ANALYTICS_BUCKET_NAME);
 ```
 
@@ -158,12 +159,14 @@ await catalog.dropNamespace(...)
 ## Recommendation
 
 ### Use `supabase-js` (getCatalog) when:
+
 - Building a full Supabase application
 - You want simpler configuration
 - You're using other Supabase features (auth, database, storage)
 - You prefer convention over configuration
 
 ### Use `iceberg-js` directly when:
+
 - Building analytics-only microservices
 - You need advanced configuration options
 - You want to minimize dependencies
@@ -193,6 +196,7 @@ getCatalog(bucketName: string): IcebergRestCatalog {
 ```
 
 **Key Points:**
+
 1. Constructs the Iceberg REST Catalog URL automatically
 2. Uses the bucket name as the catalog name (Iceberg warehouse)
 3. Passes through the Supabase client's authentication headers
