@@ -1,4 +1,4 @@
-import { IcebergRestCatalog } from "iceberg-js";
+import { IcebergRestCatalog, IcebergError } from "iceberg-js";
 
 const SUPABASE_WAREHOUSE = process.env.SUPABASE_WAREHOUSE!;
 const SUPABASE_TOKEN = process.env.SUPABASE_TOKEN!;
@@ -100,6 +100,31 @@ await listAll();
 const newNamespace = { namespace: ["test"] };
 const newTable = "taxi_dataset";
 
+// Cleanup: Drop existing table and namespace if they exist
+console.log("\n🧹 Cleaning up existing resources...\n");
+try {
+  await catalog.dropTable({ ...newNamespace, name: newTable }, { purge: true });
+  console.log("  Dropped existing table");
+} catch (error) {
+  if (error instanceof IcebergError && error.status === 404) {
+    console.log("  No existing table to clean up");
+  } else {
+    throw error;
+  }
+}
+
+try {
+  await catalog.dropNamespace(newNamespace);
+  console.log("  Dropped existing namespace");
+} catch (error) {
+  if (error instanceof IcebergError && error.status === 404) {
+    console.log("  No existing namespace to clean up");
+  } else {
+    throw error;
+  }
+}
+console.log("\n✅ Cleanup complete!\n");
+
 await catalog.createNamespace(newNamespace, {
   properties: { owner: "data-team" },
 });
@@ -110,7 +135,7 @@ await createTable(newNamespace, newTable);
 console.log("\n✅ ADDED NEW TABLE\n");
 await listAll();
 
-await catalog.dropTable({ ...newNamespace, name: newTable });
+await catalog.dropTable({ ...newNamespace, name: newTable }, { purge: true });
 console.log("\n❌ DROPPED NEW TABLE\n");
 await listAll();
 

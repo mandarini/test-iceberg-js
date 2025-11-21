@@ -1,6 +1,7 @@
 {
   "name": "test-iceberg",
   "version": "1.0.0",
+  "type": "module",
   "description": "testing iceberg js",
   "main": "index.js",
   "scripts": {
@@ -9,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "iceberg-js": "^0.5.2",
+    "iceberg-js": "https://pkg.pr.new/supabase/iceberg-js@15",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
