@@ -6,11 +6,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:local": "tsx test-local.ts",
-    "test:remote": "tsx real-test.ts"
+    "test:local": "npx tsx test-local.ts",
+    "test:remote": "npx tsx --env-file=.env real-test.ts"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "iceberg-js": "^0.6.0",
     "typescript": "^5.9.3"

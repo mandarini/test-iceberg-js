@@ -64,7 +64,7 @@ Execute the local test script:
 
 ```bash
 npm run test:local
-# or
+# or manually:
 npx tsx test-local.ts
 ```
 
@@ -81,6 +81,8 @@ The test will:
 #### Option B: Remote Testing (Supabase)
 
 ##### 2b. Set Up Environment Variables
+
+**Note:** Environment variables are only required for remote Supabase testing, not for local Docker testing.
 
 Create a `.env` file in the project root:
 
@@ -114,8 +116,8 @@ Execute the remote test script:
 
 ```bash
 npm run test:remote
-# or
-npx tsx real-test.ts
+# or manually (ensure .env is loaded):
+npx tsx --env-file=.env real-test.ts
 ```
 
 The test will:
@@ -208,9 +210,10 @@ For remote testing with `real-test.ts`, the following environment variables are 
 If you get an error like `Cannot read properties of undefined (reading 'endsWith')`, it means your environment variables aren't loaded:
 
 1. Ensure you have a `.env` file in the project root
-2. Verify Node.js version is 20+ (which supports native `.env` loading)
-3. Check that your `.env` file has all required variables
-4. Try running with explicit env loading: `node --env-file=.env -r tsx/register real-test.ts`
+2. Verify Node.js version is 20+ (which supports native `.env` loading via `--env-file`)
+3. Check that your `.env` file has all required variables (see `.env.example`)
+4. Run using the npm script: `npm run test:remote` (automatically loads `.env`)
+5. Or manually with explicit env loading: `npx tsx --env-file=.env real-test.ts`
 
 ### Port Already in Use (test-local.ts)
 
@@ -246,4 +249,4 @@ For more detailed testing instructions, see [TEST-INSTRUCTION.md](./TEST-INSTRUC
 
 ## License
 
-ISC
+MIT
