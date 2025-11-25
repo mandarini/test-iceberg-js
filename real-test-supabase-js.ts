@@ -6,16 +6,40 @@ const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_TOKEN = process.env.SUPABASE_TOKEN!;
 const ANALYTICS_BUCKET_NAME = process.env.ANALYTICS_BUCKET_NAME!;
 
-// Create Supabase client with secret key (required for analytics operations)
 const supabase = createClient(SUPABASE_URL, SUPABASE_TOKEN);
 
-// Get Iceberg catalog through supabase-js
-const catalog = supabase.storage.analytics.fromCatalog(ANALYTICS_BUCKET_NAME);
+const catalog = supabase.storage.analytics.from(ANALYTICS_BUCKET_NAME);
+
+const vectors = supabase.storage.vectors.getBucket("test");
+const vector = supabase.storage.vectors.from("test");
+const { data: vectors2 } = await vector.listIndexes({ prefix: "documents-" });
+const bucket = supabase.storage.vectors.from("embeddings-prod");
+const { data: hello } = await bucket.getIndex("documents-openai");
+console.log("Dimension:", hello?.index.dimension);
+
+const index = supabase.storage.vectors
+  .from("embeddings-prod")
+  .index("documents-openai");
+
+// Insert vectors
+await index.putVectors({
+  vectors: [
+    { key: "doc-1", data: { float32: [] }, metadata: { title: "Intro" } },
+  ],
+});
+
+// Query similar vectors
+const { data } = await index.queryVectors({
+  queryVector: { float32: [] },
+  topK: 5,
+});
+
+const files = supabase.storage.getBucket("test");
+const analytics = supabase.storage.analytics.listBuckets();
+console.log(analytics);
 
 async function listAll() {
   let namespaces = await catalog.listNamespaces();
-
-
 
   for (const namespaceItem of namespaces) {
     let namespaceName = namespaceItem.namespace[0];

@@ -14,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "https://pkg.pr.new/@supabase/supabase-js@1881",
-    "iceberg-js": "^0.7.0",
+    "iceberg-js": "^0.8.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
