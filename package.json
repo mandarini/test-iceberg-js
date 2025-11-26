@@ -13,7 +13,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "https://pkg.pr.new/@supabase/supabase-js@1881",
+    "@supabase/supabase-js": "^2.85.1-canary.0",
     "iceberg-js": "^0.8.0",
     "typescript": "^5.9.3"
   },
