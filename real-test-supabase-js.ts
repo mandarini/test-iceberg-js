@@ -115,6 +115,143 @@ async function createTable(namespace: any, tableName: string) {
   });
 }
 
+async function createComplexTypesTable(namespace: any, tableName: string) {
+  const metadata = await catalog.createTable(namespace, {
+    name: tableName,
+    schema: {
+      type: "struct",
+      fields: [
+        { id: 1, name: "id", type: "long", required: true },
+        // Decimal type - string format per OpenAPI spec
+        { id: 2, name: "price", type: "decimal(10,2)", required: false },
+        { id: 3, name: "tax_rate", type: "decimal(5,4)", required: false },
+        // Fixed type - string format per OpenAPI spec
+        { id: 4, name: "uuid_hash", type: "fixed[16]", required: false },
+        { id: 5, name: "sha256_hash", type: "fixed[32]", required: false },
+        // List type - array of strings
+        {
+          id: 6,
+          name: "tags",
+          type: {
+            type: "list",
+            "element-id": 7,
+            element: "string",
+            "element-required": false,
+          },
+          required: false,
+        },
+        // List type - array of integers
+        {
+          id: 8,
+          name: "scores",
+          type: {
+            type: "list",
+            "element-id": 9,
+            element: "int",
+            "element-required": true,
+          },
+          required: false,
+        },
+        // Map type - string to string
+        {
+          id: 10,
+          name: "metadata",
+          type: {
+            type: "map",
+            "key-id": 11,
+            key: "string",
+            "value-id": 12,
+            value: "string",
+            "value-required": false,
+          },
+          required: false,
+        },
+        // Map type - string to long (for counters)
+        {
+          id: 13,
+          name: "counters",
+          type: {
+            type: "map",
+            "key-id": 14,
+            key: "string",
+            "value-id": 15,
+            value: "long",
+            "value-required": true,
+          },
+          required: false,
+        },
+        // Nested struct type
+        {
+          id: 16,
+          name: "address",
+          type: {
+            type: "struct",
+            fields: [
+              { id: 17, name: "street", type: "string", required: false },
+              { id: 18, name: "city", type: "string", required: true },
+              { id: 19, name: "zip", type: "string", required: false },
+              { id: 20, name: "country", type: "string", required: true },
+            ],
+          },
+          required: false,
+        },
+        // List of structs (contacts)
+        {
+          id: 21,
+          name: "contacts",
+          type: {
+            type: "list",
+            "element-id": 22,
+            element: {
+              type: "struct",
+              fields: [
+                { id: 23, name: "name", type: "string", required: true },
+                { id: 24, name: "email", type: "string", required: false },
+                { id: 25, name: "phone", type: "string", required: false },
+              ],
+            },
+            "element-required": false,
+          },
+          required: false,
+        },
+        // Map with struct values
+        {
+          id: 26,
+          name: "attributes",
+          type: {
+            type: "map",
+            "key-id": 27,
+            key: "string",
+            "value-id": 28,
+            value: {
+              type: "struct",
+              fields: [
+                { id: 29, name: "value", type: "string", required: true },
+                { id: 30, name: "updated_at", type: "timestamp", required: false },
+              ],
+            },
+            "value-required": false,
+          },
+          required: false,
+        },
+      ],
+      "schema-id": 0,
+      "identifier-field-ids": [1],
+    },
+    "partition-spec": {
+      "spec-id": 0,
+      fields: [],
+    },
+    "write-order": {
+      "order-id": 0,
+      fields: [],
+    },
+    "stage-create": false,
+    properties: {},
+  });
+  return metadata;
+}
+
 console.log("\n═══════════════════════════════════════");
 console.log("    🚀 STARTING (using supabase-js)");
 console.log("═══════════════════════════════════════\n");
@@ -183,6 +320,109 @@ await listAll();
 await catalog.dropNamespace(newNamespace);
 console.log("\n❌ DROPPED NEW NAMESPACE\n");
 await listAll();
+
+// ═══════════════════════════════════════════════════════════════
+// Test Complex Types (decimal, fixed, list, map, struct)
+// ═══════════════════════════════════════════════════════════════
+
+console.log("\n═══════════════════════════════════════");
+console.log("    📊 TESTING COMPLEX TYPES");
+console.log("═══════════════════════════════════════\n");
+
+const complexNamespace = { namespace: ["complex_test"] };
+const complexTable = "all_types";
+
+// Cleanup first
+console.log("🧹 Cleaning up complex types test resources...\n");
+try {
+  await catalog.dropTable(
+    { ...complexNamespace, name: complexTable },
+    { purge: true }
+  );
+  console.log("  ✓ Dropped existing complex_types table");
+} catch (error: any) {
+  const is404 =
+    (error instanceof IcebergError && error.status === 404) ||
+    error?.status === 404 ||
+    error?.details?.error?.code === 404;
+  if (is404) {
+    console.log("  • No existing complex_types table to clean up");
+  } else {
+    throw error;
+  }
+}
+
+try {
+  await catalog.dropNamespace(complexNamespace);
+  console.log("  ✓ Dropped existing complex_test namespace");
+} catch (error: any) {
+  const is404 =
+    (error instanceof IcebergError && error.status === 404) ||
+    error?.status === 404 ||
+    error?.details?.error?.code === 404;
+  if (is404) {
+    console.log("  • No existing complex_test namespace to clean up");
+  } else {
+    throw error;
+  }
+}
+
+// Create namespace for complex types test
+await catalog.createNamespace(complexNamespace, {
+  properties: { description: "Testing complex Iceberg types" },
+});
+console.log("\n✅ Created complex_test namespace\n");
+
+// Create table with all complex types
+console.log("📊 Creating table with complex types:");
+console.log("   - decimal(10,2), decimal(5,4)");
+console.log("   - fixed[16], fixed[32]");
+console.log("   - list<string>, list<int>");
+console.log("   - map<string,string>, map<string,long>");
+console.log("   - struct (nested)");
+console.log("   - list<struct>");
+console.log("   - map<string,struct>\n");
+
+const complexMetadata = await createComplexTypesTable(
+  complexNamespace,
+  complexTable
+);
+console.log("✅ Complex types table created!");
+console.log("   Location:", complexMetadata.location);
+
+// Load and verify the table schema
+console.log("\n📖 Loading table to verify schema...\n");
+const loadedTable = await catalog.loadTable({
+  ...complexNamespace,
+  name: complexTable,
+});
+
+// Find current schema
+const currentSchema = loadedTable.schemas?.find(
+  (s: any) => s["schema-id"] === loadedTable["current-schema-id"]
+);
+
+if (currentSchema) {
+  console.log("Schema fields:");
+  for (const field of currentSchema.fields) {
+    const typeStr =
+      typeof field.type === "string"
+        ? field.type
+        : JSON.stringify(field.type).slice(0, 50) + "...";
+    console.log(`   ${field.id}. ${field.name}: ${typeStr}`);
+  }
+}
+
+console.log("\n✅ Complex types verified!\n");
+
+// Cleanup complex types test
+console.log("🧹 Cleaning up complex types test...");
+await catalog.dropTable(
+  { ...complexNamespace, name: complexTable },
+  { purge: true }
+);
+await catalog.dropNamespace(complexNamespace);
+console.log("✅ Cleanup complete!\n");
 
 console.log("\n═══════════════════════════════════════");
 console.log("           ✅ COMPLETED");
